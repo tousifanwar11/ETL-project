@@ -18,43 +18,43 @@ def extract_from_json(file_to_process):
 
 #function to extract from XML file
 def extract_from_xml(file_to_process):
-    dataframe = pd.DataFrame(columns= ["car_model", "year_of_manufacture", "price", "fuel"])
+    data = []  # Use a list to store extracted rows
     tree = ET.parse(file_to_process)
     root = tree.getroot()
     for car in root:
         car_model = car.find("car_model").text
         year_of_manufacture = car.find("year_of_manufacture").text
-        price = car.find("price").text
+        price = float(car.find("price").text)  # Convert price to float
         fuel = car.find("fuel").text
-        dataframe = pd.concat([dataframe, pd.DataFrame([{"car_model":car_model, "year_of_manufacture":year_of_manufacture, "price":price, "fuel": fuel}])], ignore_index=True)
-    return dataframe
+        data.append({"car_model": car_model, "year_of_manufacture": year_of_manufacture, "price": price, "fuel": fuel})
+    
+    return pd.DataFrame(data)  # Create DataFrame only once
 
 #fucntion to extract
 def extract():
-    extracted_data = pd.DataFrame(columns=["car_model","year_of_manufacture","price","fuel"])
-#create an empty data frame to hold extracted data
+    extracted_data = pd.DataFrame(columns=["car_model", "year_of_manufacture", "price", "fuel"])
 
-    #process all csv files
+    # Process all CSV files
     for csvfile in glob.glob("*.csv"):
-        extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_csv(csvfile))], ignore_index=True)
+        extracted_data = pd.concat([extracted_data, extract_from_csv(csvfile)], ignore_index=True)
 
-    #process all json files
+    # Process all JSON files
     for jsonfile in glob.glob("*.json"):
-        extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_json(jsonfile))],ignore_index=True)
+        extracted_data = pd.concat([extracted_data, extract_from_json(jsonfile)], ignore_index=True)
 
-    #process all xml files
+    # Process all XML files
     for xmlfile in glob.glob("*.xml"):
-        extracted_data = pd.concat([extracted_data, pd.DataFrame(extract_from_xml(xmlfile))],ignore_index=True)
+        extracted_data = pd.concat([extracted_data, extract_from_xml(xmlfile)], ignore_index=True)
 
     return extracted_data
 
+
 #Function for transforming data
 def transform(data):
-    #convert price from USD to Euro and round off the two decimals
-    # 1 USD is 0.96 Euro
-    data['price'] = round(data.price * 0.96,2)
-    
+    # Convert price from USD to Euro (1 USD = 0.96 EUR) and round to 2 decimals
+    data['price'] = data['price'].apply(lambda x: round(x * 0.96, 2))
     return data
+
 
 #fucntion to load data
 def load_data(target_file, transformed_data):
